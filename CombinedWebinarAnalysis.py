@@ -198,6 +198,20 @@ def save_upload(uploaded_file):
     tmp.close()
     return tmp.name
 
+@st.dialog("Error Alert")
+def raiseError(text):   
+    st.error(text)
+
+def generateOutput(dataFrames, sheet_names):
+    output_buffer = io.BytesIO()
+    with pd.ExcelWriter(output_buffer) as f:
+        for df, sheet in zip(dataFrames, sheet_names):
+            if df is not None:
+                df.to_excel(f, index=False, sheet_name=sheet)
+
+    output_buffer.seek(0)
+    return output_buffer
+    
 def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_chat = False):
     chats = []
 
@@ -222,25 +236,20 @@ def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_c
     if pollPath is not None:
         pollPath = save_upload(pollPath)
         Polls, TopicName, PollWebinarID  = getPollDetails(pollPath)
-
         if int(AttendanceWebinarID) == int(PollWebinarID):
             for poll in Polls:
                 mergedAttendance = mergedAttendance.merge(poll, left_on="Email", right_on="Email", how="left")
-        else:
-            st.error("There is a mismatch between Attendee File and Poll File.")
+
+            return generateOutput([mergedAttendance]+[RawChat if RawChat is not None and include_raw_chat is True else None], [TopicName[:30], "Chat"]), AttendanceWebinarID
+
+        elif int(AttendanceWebinarID) != int(PollWebinarID):
+            raiseError("There is a mismatch between Attendee File and Poll File.")
+            return None, AttendanceWebinarID
+        
     else:
         TopicName = "Details"
  
-
-    output_buffer = io.BytesIO()
-    with pd.ExcelWriter(output_buffer) as f:
-        mergedAttendance.to_excel(f, index=False, sheet_name=TopicName[:30])
-        if RawChat is not None and include_raw_chat is True:
-            RawChat.to_excel(f, index=False, sheet_name="Chat")
-    
-    output_buffer.seek(0)
-
-    return output_buffer, AttendanceWebinarID
+        return generateOutput([mergedAttendance]+[RawChat if RawChat is not None and include_raw_chat is True else None], [TopicName[:30], "Chat"]), AttendanceWebinarID
 
 
 st.set_page_config(
@@ -271,19 +280,20 @@ if button:
                     chat_file_path = None
                 if not pollPath:
                     pollPath = None
-
+    
                 df, WebinarID = processFiles(save_upload(filePath), chat_file_path, pollPath, include_raw_chat)
                 
-                output_filename = rf"attendee_{WebinarID}_Formatted.xlsx"
-
-            st.download_button(
-                label=" Download Excel Report",
-                data=df,
-                file_name= output_filename ,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                type="primary", 
-                icon="⬇️" 
-            )
+                output_filename = rf"attendee_{str(WebinarID)}_Formatted.xlsx"
+    
+                if df is not None:  
+                    st.download_button(
+                        label=" Download Excel Report",
+                        data=df,
+                        file_name= output_filename ,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        type="primary", 
+                        icon="⬇️" 
+                    )
 
     elif filePath is None:
         st.error("Please upload the zoom attendee file. Upload either the zoom chat or the Zoom poll file to get the full report.")
