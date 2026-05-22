@@ -244,12 +244,12 @@ def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_c
 
 
 st.set_page_config(
-    page_title="Combined Webinar Analysis",
+    page_title="Unified Webinar Analytics",
     page_icon="🎦",
     layout="wide"
 )
  
-st.header("🎦Combined Webinar Analysis")
+st.header("🎦Unified Webinar Analytics")
 
 st.info("Upload the Zoom attendee, poll, and chat files to generate a single consolidated file.")
 
