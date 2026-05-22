@@ -274,7 +274,7 @@ button  = st.button("Process Files", type="primary", key="button")
  
 if button:
     if filePath is not None and (chat_file_path is not None or pollPath is not None):   
-        
+        try:
             with st.spinner("Getting Ready..."):
                 if not chat_file_path:
                     chat_file_path = None
@@ -294,6 +294,8 @@ if button:
                         type="primary", 
                         icon="⬇️" 
                     )
-
+        except Exception as e:
+            raiseError("Please upload zoom attendee/chat/poll files only.")
+            
     elif filePath is None:
         st.error("Please upload the zoom attendee file. Upload either the zoom chat or the Zoom poll file to get the full report.")
