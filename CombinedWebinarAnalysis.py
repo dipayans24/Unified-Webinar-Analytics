@@ -198,6 +198,21 @@ def save_upload(uploaded_file):
     tmp.close()
     return tmp.name
 
+def getRegistration(filePath):
+    registrationSummary = pd.read_csv(filePath, sep=",", skiprows=2, nrows=1)
+    registration = pd.read_csv(filePath, sep=",",skiprows=5, skip_blank_lines=True,)
+    registration["FullNumber"] = registration.Phone.apply(lambda x: getCleanPhone(x)).astype(float, errors="ignore")
+    registration["Phone"] = registration["Phone"].apply(lambda x: getNumber(x)).astype(float, errors="ignore")
+    registration["UserName"] = registration["First Name"].fillna('') + " " + registration["Last Name"].fillna('')
+    registrationID = registrationSummary["ID"].unique()[0].replace(" ", "")
+    registration["WebinarID"] = int(registrationID)
+    registration["Date" ] = pd.to_datetime(registrationSummary["Scheduled Time"]).dt.date.values[0]
+    registration = registration[registration["Approval Status"].str.lower() == "approved"]
+    
+    registration = registration.loc[:, ["Date",  "WebinarID", 'UserName', 'First Name', 'Last Name', 'Email', 'Registration Time',
+       'Approval Status', 'Phone', 'FullNumber']]
+    return  registration, registrationID
+    
 @st.dialog("Error Alert")
 def raiseError(text):   
     st.error(text)
@@ -212,10 +227,13 @@ def generateOutput(dataFrames, sheet_names):
     output_buffer.seek(0)
     return output_buffer
     
-def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_chat = False):
+def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_chat = False, isRegistration = False):
     chats = []
 
-    attendance, AttendanceWebinarID = getAttendanceFormat(filePath=filePath)
+    if not isRegistration:
+        attendance, AttendanceWebinarID = getAttendanceFormat(filePath=filePath)
+    else:
+        attendance, AttendanceWebinarID = getRegistration(filePath=filePath)
 
     RawChat = None
     if chat_file_path is not None:
@@ -263,9 +281,12 @@ st.header("🎦Merge Zoom Files")
 st.info("Upload the Zoom attendee, poll, and chat files to generate a single consolidated file.")
 
 filePath = st.file_uploader("Upload the Attendee File", accept_multiple_files=False, type=["csv"], width="stretch")
+isRegistrationFile = st.checkbox("This is a Zoom Registration File.")
+
+
 chat_file_path = st.file_uploader("Upload the Chat File(s). Multple files supported.", accept_multiple_files=True, type=["txt"], width="stretch")
 
-include_raw_chat = st.checkbox("Includes raw chat file if selected.")
+include_raw_chat = st.checkbox("Includes raw chat file, if selected.")
 
 pollPath = st.file_uploader("Upload the Poll Report",accept_multiple_files=False, type=["csv"], width="stretch")
 
@@ -281,7 +302,7 @@ if button:
                 if not pollPath:
                     pollPath = None
     
-                df, WebinarID = processFiles(save_upload(filePath), chat_file_path, pollPath, include_raw_chat)
+                df, WebinarID = processFiles(save_upload(filePath), chat_file_path, pollPath, include_raw_chat, isRegistrationFile)
                 
                 output_filename = rf"attendee_{str(WebinarID)}_Formatted.xlsx"
     
