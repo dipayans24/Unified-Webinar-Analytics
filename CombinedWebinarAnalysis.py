@@ -65,7 +65,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
   attendance["Time in Session (minutes)"] = attendance["Time in Session (minutes)"].fillna(0).astype(float, errors="ignore")
 
   df = pd.read_csv(filePath, sep=",",  skiprows=2, on_bad_lines="skip")
-  #SessionDuration = df.loc[:, "Actual Duration (minutes)"].unique()[0]
+  TopicName = re.sub(r"[^a-zA-Z0-9\s]", "", df["Topic"].unique()[0]) 
   WebinarID =  df.loc[:, "Webinar ID"].unique()[0].replace(" ", "") 
   attendance["WebinarID"] = int(WebinarID)
 
@@ -95,7 +95,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
 
   final = final.loc[: , ["Date",  "WebinarID", "UserName", "Email", "Phone", "FullNumber", "SessionDuration"]]
 
-  return final,  WebinarID
+  return final, TopicName, WebinarID
 
 
 def formatChat(chats):
@@ -157,7 +157,7 @@ def getPollDetails(pollPath):
     #Get the pollDetails
     pollDetails = pd.read_csv(pollPath, sep=",", skiprows=1, on_bad_lines="skip", nrows=1)
     WebinarID = pollDetails["Meeting/Webinar ID"].values[0]
-    TopicName = pollDetails["Meeting Topic"].values[0]
+    #TopicName = pollDetails["Meeting Topic"].values[0]
     #SessionDate = pollDetails["Actual Start Time"].apply(lambda x : pd.to_datetime(x)).dt.date.values[0]
 
     #Get the list of polls
@@ -187,7 +187,7 @@ def getPollDetails(pollPath):
         globals()[names].rename(columns={"Email Address":"Email"}, inplace =True)
         df.append(globals()[names])
 
-    return df, TopicName, WebinarID
+    return df, WebinarID
 
 def save_upload(uploaded_file):
     """Save a Streamlit UploadedFile to a temp file and return the path."""
@@ -231,9 +231,9 @@ def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_c
     chats = []
 
     if not isRegistration:
-        attendance, AttendanceWebinarID = getAttendanceFormat(filePath=filePath)
+        attendance, TopicName, AttendanceWebinarID = getAttendanceFormat(filePath=filePath)
     else:
-        attendance, AttendanceWebinarID = getRegistration(filePath=filePath)
+        attendance, TopicName, AttendanceWebinarID = getRegistration(filePath=filePath)
 
     RawChat = None
     if chat_file_path is not None:
@@ -253,7 +253,7 @@ def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_c
 
     if pollPath is not None:
         pollPath = save_upload(pollPath)
-        Polls, TopicName, PollWebinarID  = getPollDetails(pollPath)
+        Polls,  PollWebinarID  = getPollDetails(pollPath)
         if int(AttendanceWebinarID) == int(PollWebinarID):
             for poll in Polls:
                 mergedAttendance = mergedAttendance.merge(poll, left_on="Email", right_on="Email", how="left")
@@ -265,8 +265,7 @@ def processFiles(filePath, chat_file_path = None, pollPath = None, include_raw_c
             return None, AttendanceWebinarID
         
     else:
-        TopicName = "Details"
- 
+
         return generateOutput([mergedAttendance]+[RawChat if RawChat is not None and include_raw_chat is True else None], [TopicName[:30], "Chat"]), AttendanceWebinarID
 
 
