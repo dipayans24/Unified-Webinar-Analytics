@@ -57,7 +57,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
   #fileNamePart = attendance["Join Time"].dt.strftime("%d%b%Y").unique()[0]
 
   #Extracts only the digits from the Phone column
-  attendance["FullNumber"] = attendance.Phone.apply(lambda x: getCleanPhone(x)).astype(float, errors="ignore")
+  attendance["OriginalNumber"] = attendance.Phone.apply(lambda x: getCleanPhone(x)).astype(float, errors="ignore")
 
   attendance["Phone"] = attendance["Phone"].apply(lambda x: getNumber(x)).astype(float, errors="ignore")
 
@@ -76,7 +76,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
   Duration  = attendance.groupby(by="Email", as_index=False).agg( SessionDuration = ("Time in Session (minutes)", "sum"), UserName =  ("User Name (Original Name)", "max"))
 
   #Drop the duplicate rows using the Email column
-  cleanAttendance = attendance.drop_duplicates(subset="Email", keep="first").loc[:, ["Email", "Phone", "FullNumber", "WebinarID"]]
+  cleanAttendance = attendance.drop_duplicates(subset="Email", keep="first").loc[:, ["Email", "Phone", "OriginalNumber", "WebinarID"]]
 
   #Merges the both the dataframe
   final = cleanAttendance.merge(Duration, how="left", left_on="Email", right_on="Email")
@@ -93,7 +93,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
   final["Date"] = None
   final["Date"] = final["Date"].apply(lambda x: attendanceDate if x is None else x)
 
-  final = final.loc[: , ["Date",  "WebinarID", "UserName", "Email", "Phone", "FullNumber", "SessionDuration"]]
+  final = final.loc[: , ["Date",  "WebinarID", "UserName", "Email", "Phone", "OriginalNumber", "SessionDuration"]]
 
   return final, TopicName, WebinarID
 
@@ -201,7 +201,7 @@ def save_upload(uploaded_file):
 def getRegistration(filePath):
     registrationSummary = pd.read_csv(filePath, sep=",", skiprows=2, nrows=1)
     registration = pd.read_csv(filePath, sep=",",skiprows=5, skip_blank_lines=True,)
-    registration["FullNumber"] = registration.Phone.apply(lambda x: getCleanPhone(x)).astype(float, errors="ignore")
+    registration["OriginalNumber"] = registration.Phone.apply(lambda x: getCleanPhone(x)).astype(float, errors="ignore")
     registration["Phone"] = registration["Phone"].apply(lambda x: getNumber(x)).astype(float, errors="ignore")
     registration["UserName"] = registration["First Name"].fillna('') + " " + registration["Last Name"].fillna('')
     registrationID = registrationSummary["ID"].unique()[0].replace(" ", "")
@@ -210,7 +210,7 @@ def getRegistration(filePath):
     registration = registration[registration["Approval Status"].str.lower() == "approved"]
     
     registration = registration.loc[:, ["Date",  "WebinarID", 'UserName', 'First Name', 'Last Name', 'Email', 'Registration Time',
-       'Approval Status', 'Phone', 'FullNumber']]
+       'Approval Status', 'Phone', 'OriginalNumber']]
     return  registration, registrationID
     
 @st.dialog("Error Alert")
