@@ -102,24 +102,29 @@ def formatChat(chats):
     _INVALID_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
     timestamps, comments = [], []
     current_comment = None
+    current_lines = []
 
     for raw in chats:
         line = _INVALID_CHARS.sub('', raw.decode("utf-8"))
 
         if any(kw in line for kw in ("panelists:", " Everyone:", "(direct message)")):
+            # Save previous comment with all its accumulated lines
             if current_comment is not None:
                 timestamps.append(current_comment)
-                comments.append(None)
+                comments.append("\n".join(current_lines).strip() if current_lines else None)
+            
             current_comment = line
+            current_lines = []  # Reset lines for new message
         else:
             if current_comment is not None:
-                timestamps.append(current_comment)
-                comments.append(line.strip())
-                current_comment = None
+                # Accumulate continuation lines instead of closing immediately
+                if line.strip():
+                    current_lines.append(line.strip())
 
+    # Don't forget the last message
     if current_comment is not None:
         timestamps.append(current_comment)
-        comments.append(None)
+        comments.append("\n".join(current_lines).strip() if current_lines else None)
 
     data = pd.DataFrame({"TimeStamp": timestamps, "Comments": comments})
 
