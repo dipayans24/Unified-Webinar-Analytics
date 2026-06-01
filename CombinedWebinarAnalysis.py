@@ -283,14 +283,14 @@ filePath = st.file_uploader("Upload the Attendee File", accept_multiple_files=Fa
 isRegistrationFile = st.checkbox("This is a Zoom Registration File.")
 
 
-chat_file_path = st.file_uploader("Upload the Chat File(s). Multple files supported.", accept_multiple_files=True, type=["txt"], width="stretch")
+chat_file_path = st.file_uploader("Optional- Upload the Chat File(s). Multple files supported.", accept_multiple_files=True, type=["txt"], width="stretch")
 
 if chat_file_path:
     include_raw_chat = st.checkbox("Includes raw chat file if selected.")
 else:
     include_raw_chat = False
 
-pollPath = st.file_uploader("Upload the Poll Report",accept_multiple_files=False, type=["csv"], width="stretch")
+pollPath = st.file_uploader("Optional- Upload the Poll Report",accept_multiple_files=False, type=["csv"], width="stretch")
 
 
 button  = st.button("Process Files", type="primary", key="button")
