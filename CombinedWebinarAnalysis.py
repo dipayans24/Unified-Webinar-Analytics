@@ -321,4 +321,4 @@ if button:
             raiseError("Please upload zoom attendee/registration/chat/poll files only.")
             
     elif filePath is None:
-        st.error("Please upload the zoom attendee file. Upload either the zoom chat or the Zoom poll file to get the full report.")
+        st.error("Please upload the zoom attendee file. Upload either the zoom chat or the zoom poll file or both files to get the full report.")
