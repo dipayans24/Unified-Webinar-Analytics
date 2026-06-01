@@ -277,13 +277,10 @@ st.set_page_config(
  
 st.header("🎦Merge Zoom Files")
 
-st.info('''Required: Zoom Attendee File
-
-Optional (recommended for a complete report):
-
-Zoom Chat File
-Zoom Poll File
-
+st.info('''Required: Zoom Attendee File\n
+Optional (recommended for a complete report):\n
+● Zoom Chat File\n
+● Zoom Poll File\n
 Upload the attendee file and at least one of the optional files to generate a comprehensive report.''')
 
 filePath = st.file_uploader("Upload the Attendee File", accept_multiple_files=False, type=["csv"], width="stretch")
