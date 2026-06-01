@@ -277,7 +277,14 @@ st.set_page_config(
  
 st.header("🎦Merge Zoom Files")
 
-st.info("Upload the Zoom attendee/registration, poll, and chat files to generate a single consolidated file.")
+st.info('''Required: Zoom Attendee File
+
+Optional (recommended for a complete report):
+
+Zoom Chat File
+Zoom Poll File
+
+Upload the attendee file and at least one of the optional files to generate a comprehensive report.''')
 
 filePath = st.file_uploader("Upload the Attendee File", accept_multiple_files=False, type=["csv"], width="stretch")
 isRegistrationFile = st.checkbox("This is a Zoom Registration File.")
@@ -321,4 +328,4 @@ if button:
             raiseError("Please upload zoom attendee/registration/chat/poll files only.")
             
     elif filePath is None:
-        st.error("Please upload the zoom attendee file. Upload either the zoom chat or the zoom poll file or both files to get the full report.")
+        raiseError("Please upload the zoom attendee file.")
