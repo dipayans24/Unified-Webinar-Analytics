@@ -8,8 +8,19 @@ warnings.filterwarnings("ignore", category=ParserWarning)
 from datetime import datetime
 import csv
 import tempfile, openpyxl
+import phonenumbers 
 
-
+def country_code(number):
+    if len(number) == 12 and number[:2] == "91":
+        return 91
+    elif len(number)>7:
+        try:
+            return phonenumbers.parse("+"+number ).country_code
+        except:
+            return pd.NA
+    else:
+        return pd.NA
+        
 def getNumber(number):
     try:
         mobile =  re.findall(r'\d+', str(number))[0]
@@ -84,6 +95,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
   #Change the datatype to float for the Phone column
   final.Phone = final.Phone.fillna(0).astype(float, errors="ignore")
 
+  final["ExpectedCountryCode"] = final.Phone.apply(lambda x: country_code(str(x)))
   #Filters the data by the value mentioned in the AttendanceTimeThreshold threshold
   final = final[final["SessionDuration"] > AttendanceTimeThreshold]
 
@@ -93,7 +105,7 @@ def getAttendanceFormat(filePath, AttendanceTimeThreshold = 0):
   final["Date"] = None
   final["Date"] = final["Date"].apply(lambda x: attendanceDate if x is None else x)
 
-  final = final.loc[: , ["Date",  "WebinarID", "UserName", "Email", "Phone", "OriginalNumber", "SessionDuration"]]
+  final = final.loc[: , ["Date",  "WebinarID", "UserName", "Email", "Phone", "ExpectedCountryCode", "OriginalNumber", "SessionDuration"]]
 
   return final, TopicName, WebinarID
 
